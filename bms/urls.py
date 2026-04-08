@@ -15,9 +15,26 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+# bms/urls.py
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-]
+    path('admin/', admin.site.urls),
+    
+    # Allauth URLs (handles login, logout, password reset, etc.)
+    path('accounts/', include('allauth.urls')), 
+    
+    # Temporary Dashboard Route
+    path('accounts/', include('accounts.urls')),  # Include accounts app URLs
+    path('', include('dashboard.urls')), 
+    path('staff/', include('staffms.urls')),
+    path('tasks/', include('taskms.urls')),
+    path('inventory/', include('inventory.urls')),
+    path('billing/', include('billing.urls')),
+    path('files/', include('file_manager.urls')),  # File Manager URLs
+    path('analytics/', include('analytics.urls')),  # Analytics URLs
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

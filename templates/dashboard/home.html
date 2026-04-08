@@ -1,0 +1,199 @@
+{% extends base_template %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800">Welcome back, {{ request.user.first_name|default:"Admin" }}! 👋</h2>
+        <p class="text-gray-500 mt-1">Here is what's happening in your business today.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'staffms:staff_list' %}" hx-target="#main-content" hx-push-url="true">
+            <div class="p-4 rounded-full bg-blue-50 text-blue-600 mr-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Total Staff</p>
+                <p class="text-2xl font-bold text-gray-800">{{ total_staff }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'taskms:task_board' %}" hx-target="#main-content" hx-push-url="true">
+            <div class="p-4 rounded-full bg-yellow-50 text-yellow-600 mr-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Pending Tasks</p>
+                <p class="text-2xl font-bold text-gray-800">{{ pending_tasks }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" hx-push-url="true">
+            <div class="p-4 rounded-full bg-indigo-50 text-indigo-600 mr-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Total Products</p>
+                <p class="text-2xl font-bold text-gray-800">{{ total_products }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" hx-push-url="true">
+            <div class="p-4 rounded-full bg-red-50 text-red-600 mr-4 relative">
+                {% if low_stock_count > 0 %}
+                <span class="absolute top-2 right-2 flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                {% endif %}
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Low Stock Alerts</p>
+                <p class="text-2xl font-bold {% if low_stock_count > 0 %}text-red-600{% else %}text-gray-800{% endif %}">{{ low_stock_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-2">
+            <h3 class="font-bold text-gray-800 mb-4">Monthly Revenue</h3>
+            <div class="relative h-72 w-full">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-1">
+            <h3 class="font-bold text-gray-800 mb-4">Inventory Value Distribution</h3>
+            <div class="relative h-72 w-full flex justify-center">
+                <canvas id="inventoryChart"></canvas>
+            </div>
+        </div>
+        
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">Recent Tasks</h3>
+                <button hx-get="{% url 'taskms:task_board' %}" hx-target="#main-content" hx-push-url="true" class="text-sm text-blue-600 hover:underline font-medium">View Board</button>
+            </div>
+            <div class="p-5 space-y-4">
+                {% for task in recent_tasks %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm">{{ task.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Assigned to: {{ task.assigned_to.first_name|default:"Unassigned" }}</p>
+                    </div>
+                    <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-full 
+                        {% if task.status == 'completed' %}bg-green-100 text-green-700
+                        {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-700
+                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {{ task.get_status_display }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">No tasks found. Create one!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">Low Stock Alerts</h3>
+                <button hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" hx-push-url="true" class="text-sm text-blue-600 hover:underline font-medium">Go to Inventory</button>
+            </div>
+            <div class="p-5 space-y-4">
+                {% for item in low_stock_items %}
+                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm">{{ item.name }}</p>
+                        <p class="text-xs text-red-500 mt-1 font-mono">SKU: {{ item.sku }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xl font-bold text-red-600">{{ item.quantity }}</p>
+                        <p class="text-[10px] text-red-400 uppercase font-bold">In Stock</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-500 mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <p class="text-sm text-gray-500 font-medium">All stocks are healthy!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // --- 1. REVENUE BAR CHART ---
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        const months = JSON.parse('{{ chart_months|escapejs }}');
+        const revenues = JSON.parse('{{ chart_revenues|escapejs }}');
+
+        new Chart(revCtx, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: revenues,
+                    backgroundColor: 'rgba(37, 99, 235, 0.8)', // Tailwind blue-600
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // --- 2. INVENTORY PIE CHART ---
+        const invCtx = document.getElementById('inventoryChart').getContext('2d');
+        const catLabels = JSON.parse('{{ chart_cat_labels|escapejs }}');
+        const catValues = JSON.parse('{{ chart_cat_values|escapejs }}');
+
+        new Chart(invCtx, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catValues,
+                    backgroundColor: [
+                        '#3b82f6', // blue
+                        '#10b981', // green
+                        '#f59e0b', // yellow
+                        '#ef4444', // red
+                        '#8b5cf6'  // purple
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

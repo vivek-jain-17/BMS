@@ -37,7 +37,46 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    #local apps
+    'accounts',
+    'dashboard',
+    'staffms',
+    'taskms',
+    'inventory',
+    'billing',
+    'file_manager',
+    'analytics',
+
+    #third party apps
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
 ]
+SITE_ID = 1
+
+# Tell Django to use your custom user model
+AUTH_USER_MODEL = 'accounts.User'
+
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+GROQ_API_KEY = ''
+# ==========================================
+# ALLAUTH CONFIGURATION
+# ==========================================
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_VERIFICATION = 'none' # Set to 'mandatory' later in production
+
+LOGIN_REDIRECT_URL = '/' # Where users go after logging in
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -47,6 +86,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = "bms.urls"
@@ -54,7 +94,7 @@ ROOT_URLCONF = "bms.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],  # Global templates directory
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -73,9 +113,13 @@ WSGI_APPLICATION = "bms.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bms_pro_db',   
+        'USER': 'postgres',         
+        'PASSWORD': 'vvjpostgre',
+        'HOST': 'localhost',        
+        'PORT': '5432',             
     }
 }
 
@@ -120,3 +164,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# settings.py
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

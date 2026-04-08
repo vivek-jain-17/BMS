@@ -1,0 +1,13 @@
+<div id="client-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 h-full w-full z-50 flex items-center justify-center">
+    <div class="p-6 border w-full max-w-lg shadow-2xl rounded-xl bg-white">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">{{ title }}</h3>
+        <form hx-post="{{ url }}" hx-target="#client-modal" hx-swap="outerHTML">
+            {% csrf_token %}
+            <div class="space-y-4">{{ form.as_p }}</div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('client-modal').remove()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md font-medium shadow-sm hover:bg-blue-700 transition">Save Client</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+{% extends base_template %}
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="flex items-center gap-4 border-b border-gray-200 pb-4">
+        <button hx-get="{% url 'file_manager:dashboard' %}" hx-target="#main-content" hx-push-url="true" class="text-gray-400 hover:text-blue-600 transition bg-white p-2 rounded-full shadow-sm border border-gray-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </button>
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <svg class="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                {{ folder.name }}
+            </h2>
+            <p class="text-sm text-gray-500">{{ files.count }} files inside</p>
+        </div>
+        
+        <div class="ml-auto">
+            <button hx-get="{% url 'file_manager:upload_file' %}" hx-target="#modal-container" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-md transition">
+                ↑ Upload File Here
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 text-gray-500">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold uppercase">Name</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold uppercase">Uploader</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold uppercase">Uploaded At</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold uppercase">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+                {% for file in files %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 flex items-center">
+                        <span class="text-gray-400 mr-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        </span>
+                        <span class="text-sm font-bold text-gray-900 truncate">{{ file.title }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ file.uploaded_by.first_name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ file.created_at|date:"d M Y" }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="{{ file.file.url }}" target="_blank" class="text-blue-600 font-bold text-xs bg-blue-50 px-3 py-1 rounded hover:bg-blue-100 transition">View/Download</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-gray-400 italic">This folder is empty.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

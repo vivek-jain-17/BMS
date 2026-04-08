@@ -1,0 +1,125 @@
+{% extends base_template %}
+
+{% block content %}
+<div hx-get="{% url 'inventory:dashboard' %}" hx-trigger="inventoryRefresh from:body" hx-swap="outerHTML" class="max-w-7xl mx-auto space-y-6">
+
+    <div class="flex justify-between items-center mb-2">
+        <h2 class="text-2xl font-bold text-gray-800">Inventory Overview</h2>
+        <div class="flex space-x-3">
+            <button hx-get="{% url 'inventory:add_category' %}" hx-target="#modal-container" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 shadow-sm font-medium transition">
+                + Add Category
+            </button>
+            <button hx-get="{% url 'inventory:add_product' %}" hx-target="#modal-container" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm font-medium transition flex items-center">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add Product
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+            <p class="text-sm text-gray-500 font-medium">Total Products</p>
+            <p class="text-3xl font-bold text-gray-800">{{ stats.total_products }}</p>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow-sm border border-l-4 border-l-indigo-500">
+            <p class="text-sm text-gray-500 font-medium">Categories</p>
+            <p class="text-3xl font-bold text-gray-800">{{ stats.total_categories }}</p>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow-sm border border-l-4 border-l-red-500">
+            <p class="text-sm text-gray-500 font-medium">Low Stock Alerts</p>
+            <div class="flex items-center">
+                <p class="text-3xl font-bold {% if stats.low_stock_count > 0 %}text-red-600{% else %}text-gray-800{% endif %}">
+                    {{ stats.low_stock_count }}
+                </p>
+                {% if stats.low_stock_count > 0 %}
+                <span class="ml-2 flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-lg shadow-sm border border-l-4 border-l-green-500">
+            <p class="text-sm text-gray-500 font-medium">Total Value</p>
+            <p class="text-3xl font-bold text-gray-800">₹{{ stats.total_value|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100 mt-6">
+        
+        <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+            <nav class="-mb-px flex space-x-4 overflow-x-auto pb-1" aria-label="Tabs">
+                <a href="?category=" hx-get="?category=" hx-target="#main-content" hx-push-url="true" 
+                   class="{% if not active_category %}bg-blue-100 text-blue-700{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-100{% endif %} px-3 py-2 font-medium text-sm rounded-md whitespace-nowrap transition">
+                    All Products
+                </a>
+                {% for cat in categories %}
+                <a href="?category={{ cat.id }}" hx-get="?category={{ cat.id }}" hx-target="#main-content" hx-push-url="true" 
+                   class="{% if active_category == cat.id %}bg-blue-100 text-blue-700{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-100{% endif %} px-3 py-2 font-medium text-sm rounded-md whitespace-nowrap transition">
+                    {{ cat.name }}
+                </a>
+                {% endfor %}
+            </nav>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name (SKU)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for product in products %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
+                            <div class="text-xs text-gray-500 font-mono">{{ product.sku }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ product.category.name|default:"Uncategorized" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ₹{{ product.unit_price }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-bold {% if product.is_low_stock %}text-red-600{% else %}text-gray-900{% endif %}">
+                                {{ product.quantity }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if product.quantity == 0 %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Out of Stock</span>
+                            {% elif product.is_low_stock %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Low Stock</span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">In Stock</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button hx-get="{% url 'inventory:update_stock' product.id %}" hx-target="#modal-container" class="text-blue-600 hover:text-blue-900 mr-3">Update Stock</button>
+                            <button hx-get="{% url 'inventory:product_history' product.id %}" hx-target="#modal-container" class="text-indigo-600 hover:text-indigo-900">History</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            <p class="mt-2 text-sm font-medium">No products found</p>
+                            <p class="text-xs text-gray-400">Add a product to get started.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div> <div id="modal-container"></div>
+
+{% endblock %}

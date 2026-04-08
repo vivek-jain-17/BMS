@@ -1,0 +1,31 @@
+<div id="inv-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 h-full w-full z-50 flex items-center justify-center">
+    <div class="p-6 border w-full max-w-md shadow-lg rounded-lg bg-white">
+        <h3 class="text-xl font-bold mb-4">Update Stock: {{ product.name }}</h3>
+        <p class="text-sm text-gray-500 mb-4">Current Stock: <span class="font-bold text-gray-800">{{ product.quantity }}</span></p>
+        <form hx-post="{% url 'inventory:update_stock' product.id %}" hx-target="#inv-modal" hx-swap="outerHTML">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Action</label>
+                    <select name="action" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="IN">Stock IN (+)</option>
+                        <option value="OUT">Stock OUT (-)</option>
+                        <option value="ADJ">Adjustment (-)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Quantity</label>
+                    <input type="number" name="quantity" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Notes / Reason</label>
+                    <input type="text" name="notes" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('inv-modal').remove()" class="px-4 py-2 bg-gray-100 rounded-md">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Update</button>
+            </div>
+        </form>
+    </div>
+</div>

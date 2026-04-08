@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Up Your Company - BMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen py-10">
+
+    <div class="w-full max-w-lg bg-white rounded-xl shadow-xl overflow-hidden">
+        
+        <div class="bg-blue-600 px-8 py-6 text-white text-center">
+            <h1 class="text-3xl font-bold tracking-wider mb-2">BMS<span class="text-blue-300">PRO</span></h1>
+            <h2 class="text-xl font-medium">Welcome to your new workspace!</h2>
+            <p class="text-blue-100 text-sm mt-2">Let's set up your business profile before we go to the dashboard.</p>
+        </div>
+
+        <div class="p-8">
+            <form method="POST" action="{% url 'accounts:company_setup' %}">
+                {% csrf_token %}
+
+                <div class="space-y-6">
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">Company / Organization Name <span class="text-red-500">*</span></label>
+                        {{ form.name }}
+                        <span class="text-xs text-red-500">{{ form.name.errors }}</span>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.subdomain.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">Custom Subdomain (Optional)</label>
+                        <div class="flex rounded-md shadow-sm">
+                            {{ form.subdomain }}
+                            <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                .bms.com
+                            </span>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">{{ form.subdomain.help_text }}</p>
+                        <span class="text-xs text-red-500">{{ form.subdomain.errors }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Create Workspace & Continue
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+    </div>
+
+</body>
+</html>

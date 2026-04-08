@@ -1,0 +1,69 @@
+{% extends base_template %}
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8 pb-10">
+
+    <div class="flex items-center justify-between bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+        <div class="relative z-10">
+            <h2 class="text-3xl font-black mb-2 flex items-center gap-3">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                AI Insights Engine
+            </h2>
+            <p class="text-blue-200">System has analyzed your business patterns. Here are your action items.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="font-bold text-gray-800 mb-6 border-b pb-4 flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> Stockout Predictions
+            </h3>
+            <div class="space-y-4">
+                {% for item in stock_predictions %}
+                <div class="flex items-center justify-between p-4 rounded-lg border {% if item.status == 'Critical' %}bg-red-50 border-red-100{% else %}bg-orange-50 border-orange-100{% endif %}">
+                    <div>
+                        <p class="font-bold text-gray-900">{{ item.name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Current Stock: <b>{{ item.current_stock }}</b></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-black {% if item.status == 'Critical' %}text-red-600{% else %}text-orange-600{% endif %}">{{ item.days_left }}</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Days Left</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-sm">Inventory is healthy!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 text-sm uppercase">⚠️ Bottleneck Risks</h3>
+                <div class="space-y-3">
+                    {% for staff in overdue_staff %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">{{ staff.assigned_to__first_name|default:"Unassigned" }}</span>
+                        <span class="text-xs font-bold bg-red-100 text-red-600 px-2 py-1 rounded">{{ staff.delayed_count }} delayed</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-green-600 font-medium">All staff are on track.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 text-sm uppercase">⭐ Top Value Clients</h3>
+                <div class="space-y-4">
+                    {% for client in top_clients %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-gray-800">{{ client.name }}</span>
+                        <span class="text-sm font-bold text-blue-600">₹{{ client.total_spent|default:"0" }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">Not enough data.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

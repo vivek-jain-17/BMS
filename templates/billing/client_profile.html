@@ -1,0 +1,113 @@
+{% extends base_template %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="flex items-center space-x-4 mb-2 border-b border-gray-200 pb-4">
+        <button hx-get="{% url 'billing:client_list' %}" hx-target="#main-content" hx-push-url="true" class="text-gray-400 hover:text-blue-600 transition bg-white p-2 rounded-full shadow-sm border border-gray-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </button>
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">{{ client.name }}</h2>
+            <p class="text-sm text-gray-500">Client since {{ client.created_at|date:"M Y" }}</p>
+        </div>
+        
+        <div class="ml-auto flex space-x-3">
+            <button class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 shadow-sm font-medium text-sm transition">
+                Edit Client
+            </button>
+            <a href="{% url 'billing:create_invoice' %}" hx-get="{% url 'billing:create_invoice' %}" hx-target="#main-content" hx-push-url="true" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm font-medium text-sm transition">
+                New Invoice
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Total Billed</p>
+            <p class="text-3xl font-bold text-gray-800">₹{{ total_billed|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Total Paid</p>
+            <p class="text-3xl font-bold text-green-600">₹{{ total_billed|add:"-"|add:outstanding|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-red-500">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Outstanding Balance</p>
+            <p class="text-3xl font-bold {% if outstanding > 0 %}text-red-600{% else %}text-gray-800{% endif %}">
+                ₹{{ outstanding|floatformat:2 }}
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Contact Details</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-bold">Email Address</p>
+                        <p class="text-sm text-gray-800 font-medium">{{ client.email|default:"Not provided" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-bold">Phone Number</p>
+                        <p class="text-sm text-gray-800 font-medium">{{ client.phone|default:"Not provided" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-bold">GST / Tax Number</p>
+                        <p class="text-sm font-mono text-gray-800 bg-gray-50 inline-block px-2 py-1 rounded mt-1">{{ client.tax_number|default:"Not provided" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-bold">Billing Address</p>
+                        <p class="text-sm text-gray-800 mt-1 leading-relaxed">{{ client.address|default:"No address added."|linebreaksbr }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800">Invoice History</h3>
+                </div>
+                
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Invoice #</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for inv in invoices %}
+                        <tr class="hover:bg-gray-50 transition cursor-pointer">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-blue-600">{{ inv.invoice_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ inv.date|date:"d M Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">₹{{ inv.total_amount }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-[10px] uppercase tracking-wider font-bold rounded-full 
+                                    {% if inv.status == 'paid' %}bg-green-100 text-green-700
+                                    {% elif inv.status == 'overdue' %}bg-red-100 text-red-700
+                                    {% elif inv.status == 'sent' %}bg-blue-100 text-blue-700
+                                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                    {{ inv.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                <p class="text-sm font-medium">No invoices created for this client yet.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

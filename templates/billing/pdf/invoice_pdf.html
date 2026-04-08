@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 2cm;
+        }
+        body {
+            font-family: Helvetica, sans-serif;
+            color: #333333;
+            font-size: 12px;
+        }
+        .header {
+            width: 100%;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-details {
+            width: 50%;
+            float: left;
+        }
+        .invoice-details {
+            width: 50%;
+            float: right;
+            text-align: right;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4b5563;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .billing-info {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .client-info {
+            width: 50%;
+            float: left;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th {
+            background-color: #f3f4f6;
+            color: #374151;
+            font-weight: bold;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            width: 40%;
+            float: right;
+        }
+        .totals-row {
+            padding: 5px 0;
+        }
+        .grand-total {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e3a8a;
+            border-top: 2px solid #2563eb;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="company-details">
+            <div class="company-name">{{ company.name }}</div>
+            <p>BMS PRO Workspace</p>
+        </div>
+        <div class="invoice-details">
+            <div style="font-size: 28px; font-weight: bold; color: #2563eb; margin-bottom: 10px;">INVOICE</div>
+            <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+            <p><strong>Date:</strong> {{ invoice.date|date:"d M Y" }}</p>
+            <p><strong>Due Date:</strong> {{ invoice.due_date|date:"d M Y" }}</p>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="billing-info">
+        <div class="client-info">
+            <div class="section-title">Bill To:</div>
+            <p style="font-weight: bold; font-size: 14px;">{{ client.name }}</p>
+            {% if client.email %}<p>{{ client.email }}</p>{% endif %}
+            {% if client.phone %}<p>{{ client.phone }}</p>{% endif %}
+            {% if client.address %}<p>{{ client.address }}</p>{% endif %}
+            {% if client.tax_number %}<p><strong>GST/Tax ID:</strong> {{ client.tax_number }}</p>{% endif %}
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item / Description</th>
+                <th style="text-align: center;">Qty</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    <strong>{{ item.product.name|default:"Service/Custom Item" }}</strong><br>
+                    <span style="color: #6b7280; font-size: 10px;">{{ item.description }}</span>
+                </td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td class="text-right">₹{{ item.rate }}</td>
+                <td class="text-right">₹{{ item.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="totals-row">
+            <span style="float: left;">Subtotal:</span>
+            <span style="float: right;">₹{{ invoice.subtotal }}</span>
+            <div style="clear: both;"></div>
+        </div>
+        {% if invoice.tax_amount > 0 %}
+        <div class="totals-row">
+            <span style="float: left;">Tax ({{ invoice.tax_percentage }}%):</span>
+            <span style="float: right;">₹{{ invoice.tax_amount }}</span>
+            <div style="clear: both;"></div>
+        </div>
+        {% endif %}
+        {% if invoice.discount_amount > 0 %}
+        <div class="totals-row">
+            <span style="float: left;">Discount:</span>
+            <span style="float: right;">-₹{{ invoice.discount_amount }}</span>
+            <div style="clear: both;"></div>
+        </div>
+        {% endif %}
+        <div class="grand-total">
+            <span style="float: left;">Grand Total:</span>
+            <span style="float: right;">₹{{ invoice.total_amount }}</span>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+    <div style="clear: both;"></div>
+
+    <div style="margin-top: 50px; text-align: center; color: #6b7280; font-size: 10px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+        <p>Thank you for your business!</p>
+        <p>Generated via BMS PRO</p>
+    </div>
+
+</body>
+</html>

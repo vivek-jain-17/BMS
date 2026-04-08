@@ -1,0 +1,71 @@
+{% load i18n %}
+{% load account socialaccount %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - BMS PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-black text-blue-600 tracking-tight">BMS<span class="text-slate-800">PRO</span></h1>
+                    <p class="text-slate-500 mt-2 font-medium">Create your business account</p>
+                </div>
+
+                <form class="signup space-y-4" id="signup_form" method="post" action="{% url 'account_signup' %}">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="bg-red-50 text-red-600 p-3 rounded-lg text-xs space-y-1">
+                            {{ form.non_field_errors }}
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <p>{{ field.label }}: {{ field.errors|striptags }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">{{ field.label }}</label>
+                        {{ field }}
+                        </div>
+                    {% endfor %}
+
+                    <style>
+                        input[type="text"], input[type="email"], input[type="password"] {
+                            width: 100%;
+                            padding: 0.75rem 1rem;
+                            background-color: #f8fafc;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 0.75rem;
+                            outline: none;
+                            transition: all 0.2s;
+                        }
+                        input:focus { border-color: #2563eb; ring: 2px #2563eb; }
+                    </style>
+
+                    {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                    {% endif %}
+
+                    <button class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl shadow-lg transition duration-200 mt-4" type="submit">
+                        Get Started
+                    </button>
+                </form>
+
+                <div class="mt-8 pt-6 border-t border-slate-100 text-center text-sm text-slate-600">
+                    Already have an account? <a class="font-bold text-blue-600 hover:text-blue-800" href="{{ login_url }}">Log in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
