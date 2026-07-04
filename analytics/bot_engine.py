@@ -1,102 +1,99 @@
 from groq import Groq
 from django.conf import settings
 from django.db.models import Sum
-from inventory.models import Product
-from billing.models import Invoice
+from inventory.models import Product, InventoryLog
+from billing.models import Invoice, Client
 from taskms.models import Task
 
 class TrueAIEngine:
     def __init__(self, company, user):
         self.company = company
         self.user = user
-        # Groq Client Initialization
         self.client = Groq(api_key=settings.GROQ_API_KEY)
 
     def get_business_context(self):
-        # 1. Revenue
-        try:
-            total_rev = Invoice.objects.filter(company=self.company, status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        except Exception:
-            total_rev = "Unavailable"
+        """Database se History samet sab kuch nikalna"""
+        
+        # 1. PRODUCT CATALOG (Full Details)
+        products = Product.objects.filter(company=self.company)
+        prod_list = [f"- {p.name}: {p.quantity} in stock (SKU: {p.sku}, Price: ₹{p.unit_price})" for p in products]
+        inventory_context = "\n".join(prod_list) if prod_list else "No products found."
 
-        # 2. Inventory (Total + Low Stock)
-        try:
-            total_products = Product.objects.filter(company=self.company).count()
-            low_stock_items = Product.objects.filter(company=self.company, quantity__lte=10)
-            low_stock_names = ", ".join([f"{p.name} (Qty: {p.quantity})" for p in low_stock_items[:5]])
-            if not low_stock_names: 
-                low_stock_names = "None. Inventory is healthy."
-        except Exception:
-            total_products = "Unavailable"
-            low_stock_names = "Unavailable"
+        # 2. INVENTORY HISTORY (Pichle 15 Logs)
+        logs = InventoryLog.objects.filter(product__company=self.company).order_by('-timestamp')[:15]
+        history_list = []
+        for l in logs:
+            user_name = l.user.first_name if l.user else "System"
+            history_list.append(f"- {l.timestamp.strftime('%d %b, %H:%M')} | {l.product.name} | {l.get_action_display()} | Qty: {l.quantity_changed} | New Total: {l.new_quantity} | By: {user_name}")
+        history_context = "\n".join(history_list) if history_list else "No recent history logs."
 
-        # 3. Tasks (Detailed for Staff)
-        try:
-            pending_tasks = Task.objects.filter(company=self.company).exclude(status='completed')
-            total_pending = pending_tasks.count()
-            
-            task_details_list = []
-            for t in pending_tasks[:10]: 
-                assignee = t.assigned_to.first_name if t.assigned_to else "Unassigned"
-                task_details_list.append(f"[{assignee}: {t.title} - {t.status}]")
-            
-            task_details_str = ", ".join(task_details_list) if task_details_list else "No pending tasks."
-                
-        except Exception:
-            total_pending = "Unavailable"
-            task_details_str = "Unavailable"
+        # 3. TASK & STAFF DETAIL
+        tasks = Task.objects.filter(company=self.company)
+        task_list = []
+        for t in tasks:
+            assignee = t.assigned_to.first_name if t.assigned_to else "Unassigned"
+            task_list.append(f"- [{t.status.upper()}] {t.title} assigned to {assignee}")
+        tasks_context = "\n".join(task_list) if task_list else "No tasks found."
 
-        # 4. Final Brain Context for LLM
+        # 4. REVENUE & CLIENTS
+        total_rev = Invoice.objects.filter(company=self.company, status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # FINAL CONTEXT
         context = f"""
-        LIVE BUSINESS DATA CONTEXT:
-        - Company Name: {self.company.name}
-        - Total Paid Revenue: ₹{total_rev}
+        LIVE SYSTEM STATE FOR {self.company.name.upper()}:
         
-        INVENTORY:
-        - Total Products in Catalog: {total_products}
-        - Low Stock Alert Items: {low_stock_names}
+        --- INVENTORY CATALOG ---
+        {inventory_context}
         
-        TASKS (Current Status):
-        - Total Pending Tasks: {total_pending}
-        - Detailed Task List: {task_details_str}
+        --- RECENT INVENTORY HISTORY (LOGS) ---
+        {history_context}
+        
+        --- TASK MANAGEMENT ---
+        {tasks_context}
+        
+        --- FINANCIALS ---
+        Total Revenue: ₹{total_rev}
         """
         return context
 
     def generate_response(self, user_message):
         business_data = self.get_business_context()
 
+        # 🔥 OPTIMIZED SYSTEM INSTRUCTIONS WITH GUARDRAILS 🔥
         system_instruction = f"""
-        You are an intelligent, professional, and helpful Business Management Assistant for an ERP system called "BMS PRO". 
-        You are talking to {self.user.first_name}, who is a manager/owner of '{self.company.name}'.
-        
-        Here is the LIVE DATA of their business right now:
-        {business_data}
+        You are 'BMS PRO AI CORE', a strict and highly intelligent Business Management & ERP Assistant.
+        You are talking to: {self.user.first_name} (The Boss/Manager).
 
-        INSTRUCTIONS:
-        1. Answer questions based strictly on the live data provided above.
-        2. Provide brief, actionable insights. Use bullet points or bold text for readability.
-        3. DO NOT make up data. If data is missing or unavailable, say so politely.
-        4. Match the user's language tone (Hinglish/English).
+        YOUR CORE DIRECTIVES & GUARDRAILS:
+        1. BOUNDARY RESTRICTION: You MUST ONLY answer questions related to:
+           - The provided 'LIVE SYSTEM STATE' (Inventory, Tasks, Logs, Revenue).
+           - General business, management, finance, or corporate advice.
+           If the user asks ANYTHING outside this scope (e.g., coding, general trivia, politics, jokes, recipe), you MUST politely decline and state that you are exclusively a Business Management AI.
+        
+        2. LANGUAGE MIRRORING: You MUST respond in the EXACT same language the user is asking the question in.
+           - If they ask in pure English -> Reply in English.
+           - If they ask in pure Hindi -> Reply in Hindi (Devanagari).
+           - If they ask in Hinglish (Hindi written in English alphabet) -> Reply in Hinglish.
+           - If they ask in Marathi, Gujarati, etc. -> Reply in that exact language.
+        
+        3. DATA UTILIZATION:
+           - If asked "Who added stock?", search the 'RECENT INVENTORY HISTORY'.
+           - Mention specific dates, times, and user names when looking at logs.
+           - Never say you don't have details if the details are present in the provided DATA.
+
+        Be concise, accurate, and professional.
         """
 
         try:
-            # Calling Groq API with Llama 3 8B model (Super fast and intelligent)
             chat_completion = self.client.chat.completions.create(
                 messages=[
-                    {
-                        "role": "system",
-                        "content": system_instruction,
-                    },
-                    {
-                        "role": "user",
-                        "content": user_message,
-                    }
+                    {"role": "system", "content": system_instruction},
+                    {"role": "system", "content": f"DATA:\n{business_data}"},
+                    {"role": "user", "content": user_message},
                 ],
-                model="llama3-8b-8192", # Llama 3 model on Groq
-                temperature=0.3, # Low temperature to keep it factual and less hallucinated
+                model="llama-3.3-70b-versatile",
+                temperature=0.1, # Temperature lowered to 0.1 for stricter adherence to guardrails
             )
             return chat_completion.choices[0].message.content
-            
         except Exception as e:
-            print(f"Groq Error: {e}")
-            return "Boss, Groq AI API key is missing, or the service is down right now."
+            return f"Boss, Engine error: {str(e)}"

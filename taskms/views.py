@@ -16,7 +16,6 @@ def task_board(request):
         'completed_tasks': tasks.filter(status='completed'),
         'page_title': 'Task Board',
         # UI fix wala dynamic base
-        'base_template': 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     }
     return render(request, 'taskms/board.html', context)
 

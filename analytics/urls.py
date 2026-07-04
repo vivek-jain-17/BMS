@@ -6,4 +6,5 @@ app_name = 'analytics'
 urlpatterns = [
     path('insights/', views.ai_dashboard, name='ai_dashboard'),
     path('bot-reply/', views.ai_chatbot_response, name='ai_bot_reply'),
+    path('chat-history/', views.get_chat_history, name='get_chat_history'),
 ]

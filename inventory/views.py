@@ -2,7 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 from .models import Product, Category, InventoryLog
+
 
 @login_required
 def inventory_dashboard(request):
@@ -12,13 +14,21 @@ def inventory_dashboard(request):
     products = Product.objects.filter(company=company).order_by('name')
     categories = Category.objects.filter(company=company)
     
-    # Category filter apply karna (agar URL mein ?category=id aaya hai)
+    # 1. LIVE SEARCH LOGIC
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(sku__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+
+    # 2. CATEGORY FILTER LOGIC
     category_id = request.GET.get('category')
     if category_id:
         products = products.filter(category_id=category_id)
 
     # Low stock calculate karna
-    # Hum Python mein filter kar rahe hain kyunki is_low_stock ek property hai
     low_stock_products = [p for p in products if p.is_low_stock]
     
     stats = {
@@ -29,14 +39,13 @@ def inventory_dashboard(request):
     }
 
     # HTMX Dynamic Base Trick
-    base_template = 'shared/base.html' if request.headers.get('HX-Request') else 'shared/base.html'
 
     context = {
         'products': products,
         'categories': categories,
         'stats': stats,
         'active_category': int(category_id) if category_id else None,
-        'base_template': base_template,
+        'search_query': search_query, # Search term wapas bhej rahe hain
         'page_title': 'Inventory Management'
     }
     
@@ -127,13 +136,39 @@ def update_stock(request, product_id):
     return render(request, 'inventory/partials/stock_modal.html', {'product': product})
 
 # --- PRODUCT HISTORY ---
+# --- PRODUCT HISTORY (WITH LIVE SEARCH) ---
 @login_required
 def product_history(request, product_id):
     product = get_object_or_404(Product, id=product_id, company=request.user.company)
     logs = product.stock_history.all().order_by('-timestamp')
-    return render(request, 'inventory/partials/history_modal.html', {'product': product, 'logs': logs})
 
+    # Parameters fetch karo
+    search_query = request.GET.get('log_search', '').strip()
+    date_query = request.GET.get('log_date', '').strip()
 
+    # 1. TEXT SEARCH (User, Action, Notes)
+    if search_query:
+        logs = logs.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(action__icontains=search_query) |
+            Q(notes__icontains=search_query)
+        )
+
+    # 2. DATE SEARCH (Exact date filter)
+    if date_query:
+        try:
+            # Django __date lookup use karega timestamp field par
+            logs = logs.filter(timestamp__date=date_query)
+        except ValueError:
+            pass # Invalid date format ko ignore karo
+
+    return render(request, 'inventory/partials/history_modal.html', {
+        'product': product, 
+        'logs': logs,
+        'search_query': search_query,
+        'date_query': date_query
+    })
 
 # inventory/views.py mein upar imports mein ye add kar lena:
 from .models import Vendor, PurchaseRecord
@@ -151,12 +186,10 @@ def vendor_list(request):
     vendors = Vendor.objects.filter(company=company).order_by('-created_at')
     recent_purchases = PurchaseRecord.objects.filter(company=company).order_by('-purchase_date')[:10]
     
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     return render(request, 'inventory/vendor_dashboard.html', {
         'vendors': vendors,
         'recent_purchases': recent_purchases,
-        'base_template': base_template,
         'page_title': 'Vendors & Purchases'
     })
 

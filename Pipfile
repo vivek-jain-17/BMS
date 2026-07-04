@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+psycopg-binary = "*"
+python-dotenv = "*"
+django-allauth = "*"
+django-crispy-forms = "*"
+environs = "*"
+pillow = "*"
+gunicorn = "*"
+whitenoise = "*"
+django-cors-headers = "*"
+django-htmx = "*"
+psycopg2-binary = "*"
+xhtml2pdf = "*"
+groq = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"

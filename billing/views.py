@@ -13,11 +13,9 @@ def invoice_list(request):
         invoices = Invoice.objects.filter(company=request.user.company, created_by=request.user)
     
     # HTMX Dynamic Base
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     context = {
         'invoices': invoices,
-        'base_template': base_template,
         'page_title': 'Invoices & Billing'
     }
     return render(request, 'billing/invoice_list.html', context)
@@ -72,12 +70,10 @@ def create_invoice(request):
         form = InvoiceForm(company=company, initial={'invoice_number': next_num})
         formset = InvoiceItemFormSet(form_kwargs={'company': company})
         
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     context = {
         'form': form,
         'formset': formset,
-        'base_template': base_template,
         'page_title': 'Create New Invoice'
     }
     return render(request, 'billing/create_invoice.html', context)
@@ -94,11 +90,9 @@ from django.db.models import Sum
 @login_required
 def client_list(request):
     clients = Client.objects.filter(company=request.user.company).order_by('-created_at')
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     context = {
         'clients': clients,
-        'base_template': base_template,
         'page_title': 'Clients & CRM'
     }
     return render(request, 'billing/client_list.html', context)
@@ -137,14 +131,12 @@ def client_profile(request, client_id):
     paid_invoices = invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     outstanding = total_billed - paid_invoices
 
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     context = {
         'client': client,
         'invoices': invoices,
         'total_billed': total_billed,
         'outstanding': outstanding,
-        'base_template': base_template,
         'page_title': f"{client.name} - Profile"
     }
     return render(request, 'billing/client_profile.html', context)
@@ -187,3 +179,83 @@ def generate_invoice_pdf(request, invoice_id):
         return HttpResponse('We had some errors building the PDF.')
     
     return response
+
+
+# --- UPDATE INVOICE STATUS (HTMX Modal) ---
+# --- UPDATE INVOICE STATUS (HTMX Modal) ---
+@login_required
+def update_invoice_status(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id, company=request.user.company)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(Invoice.STATUS_CHOICES):
+            invoice.status = new_status
+            invoice.save()
+            
+            # 🕵️ JASOOS (Terminal mein check karne ke liye)
+            print(f"\n--- 🚨 INVENTORY CHECK FOR {invoice.invoice_number} 🚨 ---")
+            print(f"Status Updated To: {invoice.status}")
+            print(f"Already Deducted?: {invoice.inventory_deducted}")
+            print(f"Items Found in Bill: {invoice.items.count()}")
+            
+            # Stock deduct condition
+            if invoice.status != 'draft' and not invoice.inventory_deducted:
+                print("--> Logic Pass: Ab stock kam ho raha hai...")
+                invoice.deduct_inventory(request.user)
+                print("--> Stock Successfully Deducted!")
+            else:
+                print("--> Logic Fail: Stock kam nahi hua (Ya bill Draft hai ya pehle hi deduct ho chuka tha).")
+            print("--------------------------------------------------\n")
+                
+            response = HttpResponse()
+            response['HX-Trigger'] = 'invoiceRefresh'
+            return response
+            
+    return render(request, 'billing/partials/status_modal.html', {'invoice': invoice})
+# --- EDIT INVOICE ---
+@login_required
+def edit_invoice(request, invoice_id):
+    company = request.user.company
+    invoice = get_object_or_404(Invoice, id=invoice_id, company=company)
+    
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST, instance=invoice, company=company)
+        formset = InvoiceItemFormSet(request.POST, instance=invoice, form_kwargs={'company': company})
+        
+        if form.is_valid() and formset.is_valid():
+            invoice = form.save()
+            items = formset.save(commit=False)
+            
+            subtotal = 0
+            for item in items:
+                item.amount = item.quantity * item.rate
+                item.save()
+                
+            for obj in formset.deleted_objects:
+                obj.delete()
+                
+            # Sab items ka naya total nikalna
+            subtotal = sum(item.amount for item in invoice.items.all())
+            invoice.subtotal = subtotal
+            invoice.tax_amount = (subtotal * invoice.tax_percentage) / 100
+            invoice.total_amount = subtotal + invoice.tax_amount - invoice.discount_amount
+            invoice.save()
+            
+            # Inventory logic
+            if invoice.status != 'draft' and not invoice.inventory_deducted:
+                invoice.deduct_inventory(request.user)
+                
+            messages.success(request, 'Invoice updated successfully!')
+            return redirect('billing:invoice_list')
+    else:
+        form = InvoiceForm(instance=invoice, company=company)
+        formset = InvoiceItemFormSet(instance=invoice, form_kwargs={'company': company})
+        
+    context = {
+        'form': form,
+        'formset': formset,
+        'invoice': invoice, # Pata chalega ki edit mode hai
+        'page_title': f'Edit Invoice {invoice.invoice_number}'
+    }
+    return render(request, 'billing/create_invoice.html', context)

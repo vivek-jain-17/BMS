@@ -9,5 +9,7 @@ urlpatterns = [
     path('clients/', views.client_list, name='client_list'),
     path('clients/add/', views.add_client, name='add_client'),
     path('clients/<int:client_id>/', views.client_profile, name='client_profile'),
+    path('invoices/<int:invoice_id>/edit/', views.edit_invoice, name='edit_invoice'), # NAYA
+    path('invoices/<int:invoice_id>/status/', views.update_invoice_status, name='update_invoice_status'),
     path('invoice/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='invoice_pdf'),
 ]

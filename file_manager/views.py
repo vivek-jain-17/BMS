@@ -15,12 +15,10 @@ def manager_home(request):
     # Saari files jo kisi folder mein nahi hain (Loose files)
     root_files = Document.objects.filter(company=company, folder__isnull=True)
     
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     return render(request, 'file_manager/dashboard.html', {
         'folders': folders,
         'root_files': root_files,
-        'base_template': base_template,
         'page_title': 'File Storage'
     })
 
@@ -33,12 +31,10 @@ def folder_detail(request, folder_id):
         return render(request, '403.html', status=403)
         
     files = folder.files.all()
-    base_template = 'shared/base_partial.html' if request.headers.get('HX-Request') else 'shared/base.html'
     
     return render(request, 'file_manager/folder_detail.html', {
         'folder': folder,
         'files': files,
-        'base_template': base_template
     })
 
 

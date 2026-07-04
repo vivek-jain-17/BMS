@@ -1,6 +1,6 @@
-{% extends base_template %}
+{% extends 'shared/base.html' %}
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto space-y-6" hx-get="{% url 'billing:invoice_list' %}" hx-trigger="invoiceRefresh from:body" hx-swap="outerHTML">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800">Invoices</h2>
         <a href="{% url 'billing:create_invoice' %}" hx-get="{% url 'billing:create_invoice' %}" hx-target="#main-content" hx-push-url="true" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm font-medium transition">
@@ -17,36 +17,43 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 {% for inv in invoices %}
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50 transition">
                     <td class="px-6 py-4 font-medium text-blue-600">{{ inv.invoice_number }}</td>
                     <td class="px-6 py-4 text-gray-900">{{ inv.client.name }}</td>
                     <td class="px-6 py-4 text-gray-500">{{ inv.date|date:"M d, Y" }}</td>
                     <td class="px-6 py-4 font-bold text-gray-900">₹{{ inv.total_amount }}</td>
                     <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-xs rounded-full font-semibold uppercase
-                            {% if inv.status == 'paid' %}bg-green-100 text-green-800
-                            {% elif inv.status == 'sent' %}bg-blue-100 text-blue-800
-                            {% elif inv.status == 'overdue' %}bg-red-100 text-red-800
-                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <button hx-get="{% url 'billing:update_invoice_status' inv.id %}" hx-target="#modal-container" 
+                                class="px-2 py-1 text-xs rounded-full font-semibold uppercase hover:ring-2 hover:ring-offset-1 transition cursor-pointer
+                            {% if inv.status == 'paid' %}bg-green-100 text-green-800 ring-green-400
+                            {% elif inv.status == 'sent' %}bg-blue-100 text-blue-800 ring-blue-400
+                            {% elif inv.status == 'overdue' %}bg-red-100 text-red-800 ring-red-400
+                            {% else %}bg-gray-100 text-gray-800 ring-gray-400{% endif %}" title="Click to change status">
                             {{ inv.get_status_display }}
-                        </span>
+                        </button>
                     </td>
-                    <td class="px-6 py-4 text-right">
+                    <td class="px-6 py-4 text-right flex justify-end gap-3">
+                        
+                        <a href="{% url 'billing:edit_invoice' inv.id %}" hx-get="{% url 'billing:edit_invoice' inv.id %}" hx-target="#main-content" hx-push-url="true" class="text-yellow-500 hover:text-yellow-600 transition" title="Edit Invoice">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </a>
+
                         <a href="{% url 'billing:invoice_pdf' inv.id %}" target="_blank" class="text-gray-500 hover:text-blue-600 transition" title="Download PDF">
                             <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="px-6 py-10 text-center text-gray-500">No invoices generated yet.</td></tr>
+                <tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">No invoices generated yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+<div id="modal-container"></div>
 {% endblock %}

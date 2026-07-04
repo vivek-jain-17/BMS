@@ -12,20 +12,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from the .env file in the base directory
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-x_4$om-6c^f8iququ)_rpy94e#980957c1c8=6kv#)nb^ce*%#"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS = []
+# Split the string from .env into a list for Django
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
 
 # Application definition
@@ -37,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    "corsheaders",
 
     #local apps
     'accounts',
@@ -53,6 +60,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'django_htmx',
 ]
 SITE_ID = 1
 
@@ -65,7 +73,9 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-GROQ_API_KEY = ''
+# APIs
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 # ==========================================
 # ALLAUTH CONFIGURATION
 # ==========================================
@@ -79,7 +89,9 @@ LOGIN_REDIRECT_URL = '/' # Where users go after logging in
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -87,6 +99,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'allauth.account.middleware.AccountMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = "bms.urls"
@@ -115,11 +128,11 @@ WSGI_APPLICATION = "bms.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bms_pro_db',   
-        'USER': 'postgres',         
-        'PASSWORD': 'vvjpostgre',
-        'HOST': 'localhost',        
-        'PORT': '5432',             
+        'NAME': os.getenv("DB_NAME"),   
+        'USER': os.getenv("DB_USER"),         
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST", "localhost"),        
+        'PORT': os.getenv("DB_PORT", "5432"),             
     }
 }
 
@@ -159,6 +172,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -170,3 +184,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://claudette-weighable-holistically.ngrok-free.dev",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "https://claudette-weighable-holistically.ngrok-free.dev",
+]
+
+CSRF_COOKIE_SECURE = False 
+SESSION_COOKIE_SECURE = False

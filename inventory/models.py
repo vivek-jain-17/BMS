@@ -76,7 +76,6 @@ class InventoryLog(models.Model):
     
 
 
-
 class Vendor(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='vendors')
     name = models.CharField(max_length=255)

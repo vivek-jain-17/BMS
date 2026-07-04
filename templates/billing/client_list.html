@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends 'shared/base.html' %}
 {% block content %}
 <div hx-get="{% url 'billing:client_list' %}" hx-trigger="clientRefresh from:body" hx-swap="outerHTML" class="max-w-7xl mx-auto space-y-6">
     

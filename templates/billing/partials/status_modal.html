@@ -1,0 +1,26 @@
+<div id="inv-status-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 h-full w-full z-50 flex items-center justify-center">
+    <div class="p-6 border w-96 shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Update Status: {{ invoice.invoice_number }}</h3>
+            <button onclick="document.getElementById('inv-status-modal').remove()" class="text-red-500 font-bold text-xl">&times;</button>
+        </div>
+        
+        <form hx-post="{% url 'billing:update_invoice_status' invoice.id %}" hx-swap="none" onsubmit="setTimeout(() => document.getElementById('inv-status-modal').remove(), 300)">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Select New Status</label>
+                <select name="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                    <option value="draft" {% if invoice.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="sent" {% if invoice.status == 'sent' %}selected{% endif %}>Sent</option>
+                    <option value="paid" {% if invoice.status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="unpaid" {% if invoice.status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                    <option value="overdue" {% if invoice.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button type="button" onclick="document.getElementById('inv-status-modal').remove()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Status</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,13 +1,28 @@
-{% extends base_template %}
+{% extends 'shared/base.html' %}
 {% block content %}
 <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-8">
     
     <div class="mb-6 flex justify-between items-center border-b pb-4">
-        <h2 class="text-2xl font-bold text-gray-800">Create New Invoice</h2>
+        <h2 class="text-2xl font-bold text-gray-800">
+            {% if invoice %}Edit Invoice: {{ invoice.invoice_number }}{% else %}Create New Invoice{% endif %}
+        </h2>
         <a href="{% url 'billing:invoice_list' %}" hx-get="{% url 'billing:invoice_list' %}" hx-target="#main-content" hx-push-url="true" class="text-gray-500 hover:text-gray-700">Cancel</a>
     </div>
 
-    <form method="POST" action="{% url 'billing:create_invoice' %}">
+    {% if form.errors or formset.errors %}
+    <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
+        <h3 class="font-bold border-b border-red-200 pb-1 mb-2">Please fix these errors:</h3>
+        <div class="text-sm space-y-1 mt-2">
+            {{ form.errors }}
+            {% for err_dict in formset.errors %}
+                {% if err_dict %} <p><strong>Item Error:</strong> {{ err_dict }}</p> {% endif %}
+            {% endfor %}
+            {{ formset.non_form_errors }}
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% if invoice %}{% url 'billing:edit_invoice' invoice.id %}{% else %}{% url 'billing:create_invoice' %}{% endif %}" novalidate>
         {% csrf_token %}
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -40,7 +55,9 @@
             </div>
             {% endfor %}
             
-            <div id="items-container"></div> <button type="button" id="add-item-btn" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center">
+            <div id="items-container"></div> 
+            
+            <button type="button" id="add-item-btn" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Add Another Item
             </button>
@@ -57,8 +74,8 @@
                     <div class="w-1/2">{{ form.discount_amount }}</div>
                 </div>
                 <div class="flex justify-between items-center pt-4 border-t">
-                    <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-bold w-full">
-                        Generate Invoice
+                    <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-bold w-full transition">
+                        {% if invoice %}Update Invoice{% else %}Generate Invoice{% endif %}
                     </button>
                 </div>
             </div>
@@ -68,42 +85,44 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    (function() {
         const addButton = document.getElementById('add-item-btn');
-        const container = document.getElementById('items-container');
-        const totalForms = document.querySelector('#id_items-TOTAL_FORMS'); // Django ka hidden field
+        const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
         
-        // Pehle row ko copy karke as a template use karenge
-        const firstRow = document.querySelector('.item-row');
+        if (!totalForms || !addButton) return; 
+        
+        const prefix = totalForms.name.split('-')[0]; 
 
-        // --- ADD NEW ROW LOGIC ---
-        addButton.addEventListener('click', function() {
+        addButton.addEventListener('click', function(e) {
+            e.preventDefault(); 
             let currentFormCount = parseInt(totalForms.value);
-            let newRow = firstRow.cloneNode(true); // Row copy kiya
             
-            // Naye row ke andar inputs ka ID aur Name update karna (Django format: items-0-product -> items-1-product)
-            let regex = new RegExp(`items-0-`, 'g');
-            newRow.innerHTML = newRow.innerHTML.replace(regex, `items-${currentFormCount}-`);
+            const rows = document.querySelectorAll('.item-row');
+            const lastRow = rows[rows.length - 1];
             
-            // Values clear karna (Taaki naya row khali aaye)
-            let inputs = newRow.querySelectorAll('input, select');
+            let newRow = lastRow.cloneNode(true);
+            
+            let regex = new RegExp(`${prefix}-(\\d+)-`, 'g');
+            newRow.innerHTML = newRow.innerHTML.replace(regex, `${prefix}-${currentFormCount}-`);
+            
+            let inputs = newRow.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
-                if(input.type !== 'hidden') input.value = '';
+                if(input.type !== 'hidden' && input.type !== 'checkbox') {
+                    input.value = ''; 
+                }
+                if(input.type === 'checkbox') {
+                    input.checked = false; 
+                }
                 if(input.name.includes('quantity')) input.value = '1';
                 if(input.name.includes('rate')) input.value = '0.00';
             });
             
-            // Delete checkbox ko reset karna
-            let deleteCheckbox = newRow.querySelector('input[type="checkbox"]');
-            if (deleteCheckbox) deleteCheckbox.checked = false;
-
-            container.appendChild(newRow);
-            totalForms.value = currentFormCount + 1; // Form count badha diya
+            lastRow.parentNode.insertBefore(newRow, lastRow.nextSibling);
+            totalForms.value = currentFormCount + 1;
             
-            attachCalculationListeners(); // Naye row pe bhi calculation lagao
+            attachCalculationListeners(); 
         });
 
-        // --- LIVE CALCULATION LOGIC ---
         function attachCalculationListeners() {
             const quantities = document.querySelectorAll('input[name$="-quantity"]');
             const rates = document.querySelectorAll('input[name$="-rate"]');
@@ -115,24 +134,25 @@
                 let rows = document.querySelectorAll('.item-row');
                 
                 rows.forEach((row, index) => {
-                    let qty = parseFloat(document.querySelector(`input[name="items-${index}-quantity"]`)?.value) || 0;
-                    let rate = parseFloat(document.querySelector(`input[name="items-${index}-rate"]`)?.value) || 0;
+                    let qtyInput = row.querySelector(`input[name$="-quantity"]`);
+                    let rateInput = row.querySelector(`input[name$="-rate"]`);
+                    let deleteCheckbox = row.querySelector(`input[name$="-DELETE"]`);
                     
-                    // Ignore agar row delete ke liye mark kiya hai
-                    let deleteCheckbox = document.querySelector(`input[name="items-${index}-DELETE"]`);
+                    let qty = parseFloat(qtyInput?.value) || 0;
+                    let rate = parseFloat(rateInput?.value) || 0;
+                    
                     if (!deleteCheckbox || !deleteCheckbox.checked) {
                         subtotal += (qty * rate);
                     }
                 });
 
-                let taxPercent = parseFloat(taxInput.value) || 0;
-                let discount = parseFloat(discountInput.value) || 0;
+                let taxPercent = parseFloat(taxInput?.value) || 0;
+                let discount = parseFloat(discountInput?.value) || 0;
                 
                 let taxAmount = (subtotal * taxPercent) / 100;
                 let finalTotal = subtotal + taxAmount - discount;
                 
-                // UI update (Agar tu display karna chahe)
-                console.log(`Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${finalTotal}`);
+                console.log(`Subtotal: ₹${subtotal.toFixed(2)}, Tax: ₹${taxAmount.toFixed(2)}, Total: ₹${finalTotal.toFixed(2)}`);
             }
 
             quantities.forEach(input => input.addEventListener('input', calculateTotal));
@@ -141,7 +161,7 @@
             if(discountInput) discountInput.addEventListener('input', calculateTotal);
         }
 
-        attachCalculationListeners(); // First time run
-    });
+        attachCalculationListeners(); 
+    })();
 </script>
 {% endblock %}

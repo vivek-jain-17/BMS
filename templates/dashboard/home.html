@@ -1,199 +1,342 @@
-{% extends base_template %}
-
+{% extends 'shared/base.html' %}
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-6">
 
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-800">Welcome back, {{ request.user.first_name|default:"Admin" }}! 👋</h2>
-        <p class="text-gray-500 mt-1">Here is what's happening in your business today.</p>
-    </div>
+<div id="new-page-title" hx-swap-oob="true" style="display:none;">Command Center</div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'staffms:staff_list' %}" hx-target="#main-content" hx-push-url="true">
-            <div class="p-4 rounded-full bg-blue-50 text-blue-600 mr-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Total Staff</p>
-                <p class="text-2xl font-bold text-gray-800">{{ total_staff }}</p>
-            </div>
+<div class="max-w-7xl mx-auto space-y-6 pb-12">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Welcome back, {{ request.user.first_name|default:"Admin" }}! 👋</h2>
+            <p class="text-sm text-gray-500 mt-1">Here is the real-time heartbeat of your business.</p>
         </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'taskms:task_board' %}" hx-target="#main-content" hx-push-url="true">
-            <div class="p-4 rounded-full bg-yellow-50 text-yellow-600 mr-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Pending Tasks</p>
-                <p class="text-2xl font-bold text-gray-800">{{ pending_tasks }}</p>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" hx-push-url="true">
-            <div class="p-4 rounded-full bg-indigo-50 text-indigo-600 mr-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Total Products</p>
-                <p class="text-2xl font-bold text-gray-800">{{ total_products }}</p>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center hover:shadow-md transition cursor-pointer" hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" hx-push-url="true">
-            <div class="p-4 rounded-full bg-red-50 text-red-600 mr-4 relative">
-                {% if low_stock_count > 0 %}
-                <span class="absolute top-2 right-2 flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+        <div class="mt-4 md:mt-0 flex gap-3 items-center">
+            <div class="flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">
+                <span class="relative flex h-2 w-2 mr-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                {% endif %}
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                SYSTEM HEALTH: OPTIMAL
             </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Low Stock Alerts</p>
-                <p class="text-2xl font-bold {% if low_stock_count > 0 %}text-red-600{% else %}text-gray-800{% endif %}">{{ low_stock_count }}</p>
-            </div>
+            <a href="{% url 'billing:create_invoice' %}" class="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md transition flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Invoice
+            </a>
         </div>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-2">
-            <h3 class="font-bold text-gray-800 mb-4">Monthly Revenue</h3>
-            <div class="relative h-72 w-full">
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200 relative overflow-hidden group hover:border-blue-400 transition-all">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Collected</p>
+                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+            </div>
+            <h3 class="text-3xl font-black text-gray-900">₹{{ total_revenue|default:"0.00" }}</h3>
+            <p class="text-xs text-green-600 font-bold mt-2 flex items-center">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                Stable Cashflow
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200 relative overflow-hidden group hover:border-orange-400 transition-all">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Outstanding (Pending)</p>
+                <div class="p-2 bg-orange-50 text-orange-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path></svg></div>
+            </div>
+            <h3 class="text-3xl font-black text-gray-900">₹{{ outstanding_amount|default:"0.00" }}</h3>
+            <p class="text-xs text-red-500 font-bold mt-2 flex items-center">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+                Requires Follow-up
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200 relative overflow-hidden group hover:border-emerald-400 transition-all cursor-pointer" hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Products</p>
+                <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg></div>
+            </div>
+            <h3 class="text-3xl font-black text-gray-900">{{ total_products|default:"0" }} <span class="text-sm font-medium text-gray-400">SKUs</span></h3>
+            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-3">
+                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: 85%"></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200 relative overflow-hidden group hover:border-rose-400 transition-all cursor-pointer" hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Low Stock Alerts</p>
+                <div class="p-2 bg-rose-50 text-rose-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+            </div>
+            <h3 class="text-3xl font-black {% if low_stock_count > 0 %}text-rose-600{% else %}text-gray-900{% endif %}">{{ low_stock_count|default:"0" }}</h3>
+            <p class="text-xs text-rose-600 font-bold mt-2 flex items-center">
+                Action Required
+            </p>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-xl shadow-md p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-32 h-32 rounded-full border-4 border-white/10"></div>
+            <div class="absolute right-12 top-12 w-16 h-16 rounded-full border-2 border-white/10"></div>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="font-bold text-lg">Monthly Sales Target</h3>
+                        <p class="text-xs text-blue-200 uppercase tracking-widest mt-1">Goal: ₹10,00,000</p>
+                    </div>
+                    <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-end gap-2 mb-2">
+                    <span class="text-4xl font-black">₹6,50,000</span>
+                    <span class="text-sm text-blue-200 mb-1">Achieved</span>
+                </div>
+                <div class="w-full bg-black/30 rounded-full h-3 mb-2">
+                    <div class="bg-gradient-to-r from-blue-400 to-cyan-300 h-3 rounded-full relative" style="width: 65%">
+                        <span class="absolute right-0 top-0 h-full w-4 bg-white/50 blur-[2px] rounded-full"></span>
+                    </div>
+                </div>
+                <p class="text-xs text-right text-cyan-200 font-bold">65% Completed</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:col-span-2 flex flex-col">
+            <div class="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-gray-900">👑 Top Performing Products</h3>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wide">Ranked by Unit Value</p>
+                </div>
+                <button hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" class="text-xs font-bold text-blue-600 hover:text-blue-800">View Catalog</button>
+            </div>
+            <div class="p-5 flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for prod in top_products %}
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:shadow-sm transition group">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs
+                        {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-600 border border-yellow-200
+                        {% elif forloop.counter == 2 %}bg-gray-100 text-gray-500 border border-gray-200
+                        {% elif forloop.counter == 3 %}bg-orange-100 text-orange-600 border border-orange-200
+                        {% else %}bg-blue-50 text-blue-600{% endif %}">
+                        #{{ forloop.counter }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-gray-800 truncate group-hover:text-blue-600 transition" title="{{ prod.name }}">{{ prod.name }}</p>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-[10px] text-gray-500 font-mono">{{ prod.sku }}</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span class="text-[10px] font-bold text-emerald-600">₹{{ prod.unit_price }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-gray-400 italic text-center col-span-2 py-4">No products found. Add items to inventory.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Financial Performance</h3>
+                    <p class="text-xs text-gray-500">Trailing 6-month revenue vs outstanding collections</p>
+                </div>
+            </div>
+            <div class="relative w-full" style="height: 300px;">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-1">
-            <h3 class="font-bold text-gray-800 mb-4">Inventory Value Distribution</h3>
-            <div class="relative h-72 w-full flex justify-center">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-1 flex flex-col">
+            <div class="mb-4 text-center">
+                <h3 class="font-bold text-gray-900 text-lg">Inventory Distribution</h3>
+                <p class="text-xs text-gray-500">Top Categories by Capital Value</p>
+            </div>
+            <div class="relative w-full flex-1 flex justify-center items-center" style="min-height: 250px;">
                 <canvas id="inventoryChart"></canvas>
             </div>
         </div>
-        
+
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-gray-800">Recent Tasks</h3>
-                <button hx-get="{% url 'taskms:task_board' %}" hx-target="#main-content" hx-push-url="true" class="text-sm text-blue-600 hover:underline font-medium">View Board</button>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col lg:col-span-1">
+            <div class="p-5 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-900">Task Allocation Status</h3>
+                <p class="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wide">Workload Distribution</p>
             </div>
-            <div class="p-5 space-y-4">
-                {% for task in recent_tasks %}
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                    <div>
-                        <p class="font-semibold text-gray-800 text-sm">{{ task.title }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Assigned to: {{ task.assigned_to.first_name|default:"Unassigned" }}</p>
+            <div class="p-5 flex-1 overflow-y-auto space-y-5">
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span class="text-gray-700">Team Workload</span>
+                        <span class="text-blue-600">{{ pending_tasks }} Pending</span>
                     </div>
-                    <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-full 
-                        {% if task.status == 'completed' %}bg-green-100 text-green-700
-                        {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-700
-                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                        {{ task.get_status_display }}
-                    </span>
+                    <div class="w-full bg-gray-100 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: 75%"></div>
+                    </div>
                 </div>
-                {% empty %}
-                <p class="text-sm text-gray-500 text-center py-4">No tasks found. Create one!</p>
-                {% endfor %}
+                <div class="mt-4 space-y-3">
+                    {% for task in recent_tasks|slice:":4" %}
+                    <div class="flex items-center justify-between text-xs p-2 bg-gray-50 rounded border border-gray-100">
+                        <span class="font-semibold text-gray-700 truncate max-w-[150px]">{{ task.title }}</span>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase">{{ task.assigned_to.first_name|default:"Unassigned" }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-gray-400 italic">No recent tasks.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <button hx-get="{% url 'taskms:task_board' %}" hx-target="#main-content" class="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-bold">Manage Tasks &rarr;</button>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-gray-800">Low Stock Alerts</h3>
-                <button hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" hx-push-url="true" class="text-sm text-blue-600 hover:underline font-medium">Go to Inventory</button>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:col-span-2">
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-white">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Action Items Feed</h3>
+                    <p class="text-xs text-gray-500">Urgent inventory alerts and system notifications.</p>
+                </div>
+                <span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider border border-indigo-100">Live</span>
             </div>
-            <div class="p-5 space-y-4">
-                {% for item in low_stock_items %}
-                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                    <div>
-                        <p class="font-semibold text-gray-800 text-sm">{{ item.name }}</p>
-                        <p class="text-xs text-red-500 mt-1 font-mono">SKU: {{ item.sku }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xl font-bold text-red-600">{{ item.quantity }}</p>
-                        <p class="text-[10px] text-red-400 uppercase font-bold">In Stock</p>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="text-center py-8">
-                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-500 mb-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
-                    <p class="text-sm text-gray-500 font-medium">All stocks are healthy!</p>
-                </div>
-                {% endfor %}
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Item Detail</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        
+                        {% for item in low_stock_items|slice:":5" %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-xs">SKU</div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-bold text-gray-900 truncate max-w-[200px]" title="{{ item.name }}">{{ item.name }}</div>
+                                        <div class="text-[10px] text-gray-500 font-mono">Stock Left: <span class="text-rose-600 font-bold">{{ item.quantity }}</span></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap"><span class="text-xs font-medium text-gray-600">Inventory Alert</span></td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-[10px] leading-5 font-black rounded-full bg-rose-100 text-rose-800 uppercase">Critical Low</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button hx-get="{% url 'inventory:dashboard' %}" hx-target="#main-content" class="text-blue-600 hover:text-blue-900 font-bold text-xs bg-blue-50 border border-blue-100 px-3 py-1.5 rounded transition hover:bg-blue-100">Restock</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-10 text-center text-gray-500 text-sm font-medium">
+                                No urgent alerts. Everything is running smoothly.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
     </div>
+
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // --- 1. REVENUE BAR CHART ---
-        const revCtx = document.getElementById('revenueChart').getContext('2d');
-        const months = JSON.parse('{{ chart_months|escapejs }}');
-        const revenues = JSON.parse('{{ chart_revenues|escapejs }}');
+    function initDashboardCharts() {
+        const revCanvas = document.getElementById('revenueChart');
+        const invCanvas = document.getElementById('inventoryChart');
+        
+        // Destroy old instances to prevent overlapping bugs during HTMX navigation
+        if (window.myRevChart) window.myRevChart.destroy();
+        if (window.myInvChart) window.myInvChart.destroy();
 
-        new Chart(revCtx, {
-            type: 'bar',
-            data: {
-                labels: months,
-                datasets: [{
-                    label: 'Revenue (₹)',
-                    data: revenues,
-                    backgroundColor: 'rgba(37, 99, 235, 0.8)', // Tailwind blue-600
-                    borderRadius: 6,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
-                    x: { grid: { display: false } }
+        // 1. REVENUE BAR CHART
+        if (revCanvas) {
+            const months = JSON.parse('{{ chart_months|escapejs|default:"[\"No Data\"]" }}');
+            const paidData = JSON.parse('{{ chart_paid|escapejs|default:"[0]" }}');
+            const expectedData = JSON.parse('{{ chart_expected|escapejs|default:"[0]" }}');
+
+            window.myRevChart = new Chart(revCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Collected (₹)',
+                            data: paidData,
+                            backgroundColor: '#10b981', // Emerald
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                        },
+                        {
+                            label: 'Pending (₹)',
+                            data: expectedData,
+                            backgroundColor: '#f59e0b', // Amber
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                        }
+                    ]
                 },
-                plugins: {
-                    legend: { display: false }
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { stacked: true, beginAtZero: true, grid: { color: '#f3f4f6', borderDash: [5, 5] }, border: { display: false } },
+                        x: { stacked: true, grid: { display: false }, border: { display: false } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8, font: {family: 'sans-serif', weight: 'bold'} } },
+                        tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', padding: 10, cornerRadius: 8 }
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        // --- 2. INVENTORY PIE CHART ---
-        const invCtx = document.getElementById('inventoryChart').getContext('2d');
-        const catLabels = JSON.parse('{{ chart_cat_labels|escapejs }}');
-        const catValues = JSON.parse('{{ chart_cat_values|escapejs }}');
+        // 2. INVENTORY PIE CHART
+        if (invCanvas) {
+            const catLabels = JSON.parse('{{ chart_cat_labels|escapejs|default:"[\"Empty\"]" }}');
+            const catValues = JSON.parse('{{ chart_cat_values|escapejs|default:"[1]" }}');
 
-        new Chart(invCtx, {
-            type: 'doughnut',
-            data: {
-                labels: catLabels,
-                datasets: [{
-                    data: catValues,
-                    backgroundColor: [
-                        '#3b82f6', // blue
-                        '#10b981', // green
-                        '#f59e0b', // yellow
-                        '#ef4444', // red
-                        '#8b5cf6'  // purple
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12 } }
+            window.myInvChart = new Chart(invCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catValues,
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 20 } },
+                        tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', padding: 10, cornerRadius: 8 }
+                    }
                 }
-            }
-        });
-    });
+            });
+        }
+    }
+
+    // Initialize on direct load
+    initDashboardCharts();
+    // Re-initialize on HTMX navigation
+    document.body.addEventListener('htmx:afterSettle', initDashboardCharts);
 </script>
 {% endblock %}
