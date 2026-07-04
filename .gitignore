@@ -14,6 +14,7 @@ __pycache__/
 *.log
 local_settings.py
 db.sqlite3
+bms_backup.sql
 db.sqlite3-journal
 
 # Static and Media files (AWS will handle these dynamically)
